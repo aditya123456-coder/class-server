@@ -16,7 +16,7 @@
   <a href="https://originenotes.netlify.app/">Private notes</a>
   <a href="#">Services</a>
   <button style="background: none; border: none; margin-top: 5px;" type="button" class="floating-btn" id="addBtn">Add</button>
-  <button style="padding: 10px 15px;text-decoration: none;font-size: 18px;color: rgba(0, 0, 0, 0.526);display: block; background: none; border: none;" id="logoutBtn" onclick="logout()">Logout</button>
+  <button style="padding: 10px 15px;text-decoration: none;font-size: 18px;color: rgb(255, 255, 255);display: block; background: none; border: none; margin-top: 10px;" id="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
   <!-- PASSWORD MODAL -->
@@ -117,7 +117,7 @@
   <!-- HEADER / NAV -->
   <header>
     <a style="text-decoration: none;" href="#" class="logo">
-      <button class="openbtn" onclick="openSidebar()">&#9776;</button>
+      <button style="background: none; color: white;" class="openbtn" onclick="openSidebar()">&#9776;</button>
       <img src="icon.png" alt="logo">
     </a>
     <div class="breadcrumbs" id="breadcrumbs">
@@ -147,10 +147,10 @@
     <div class="container" id="container">
       <div class="empty-state">
         <i class="fas fa-cloud-upload-alt"></i>
-        <p>No files or folders yet</p>
+        <p style="color: white;">No files or folders yet</p>
       </div>
     </div>
-    <div style="text-align: center;">
+    <div style="text-align: center; margin-top: 20px;">
        <button class="btn btn-primary" id="loginBtn" onclick="login()">Login</button>
     </div>
     
@@ -179,7 +179,7 @@
   <!-- LOADING OVERLAY -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    <p>Loading...</p>
+    <p style="color: white;">Loading...</p>
   </div>
 
   <script type="module">
@@ -514,7 +514,7 @@
 
       card.innerHTML = `
         <h3>${data.name}</h3>
-        ${data.description ? `<p style="font-size: .85rem; color: #666; white-space: pre-wrap;">${data.description}</p>` : ''}
+        ${data.description ? `<p style="font-size: .85rem; color: white; white-space: pre-wrap;">${data.description}</p>` : ''}
         ${data.type === 'file' ? `
           <div class="file-size">${formatSize(data.size)}</div>
           <div class="file-date">${formatDate(data.createdAt)}</div>` : ''}
