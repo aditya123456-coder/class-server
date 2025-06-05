@@ -1167,8 +1167,7 @@ window.handlePasswordSubmit = async function() {
     ? `<p class="card-desc">${highlightedDesc}</p>`
     : ''}
   ${item.type === 'file'
-    ? `<div class="file-size">${formatSize(item.size)}</div>
-       <div class="file-date">${formatDate(item.createdAt)}</div>`
+    ? ''
     : ''}
 `;
 
