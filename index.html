@@ -231,6 +231,10 @@
     const itemsPerPage = 10;
     let hasMoreItems = false;
     let isLoadingMore = false;
+    
+    // Search pagination variables
+    let currentSearchPage = 0;
+    let hasMoreSearchResults = false;
 
     // DOM References
     const container = document.getElementById('container');
@@ -513,12 +517,17 @@
       }
 
       card.innerHTML = `
-        <h3>${data.name}</h3>
-        ${data.description ? `<p style="font-size: .85rem; color: white; white-space: pre-wrap;">${data.description}</p>` : ''}
-        ${data.type === 'file' ? `
-          <div class="file-size">${formatSize(data.size)}</div>
-          <div class="file-date">${formatDate(data.createdAt)}</div>` : ''}
-      `;
+  <h3>${data.name}</h3>
+  ${data.description
+    ? `<p class="card-desc">${data.description}</p>`
+    : ''}
+  ${data.type === 'file'
+    ? `
+      <div class="file-size">${formatSize(data.size)}</div>
+      <div class="file-date">${formatDate(data.createdAt)}</div>`
+    : ''}
+`;
+
 
       if (isAdmin) {
         const ab = document.createElement('div');
@@ -1091,6 +1100,7 @@ window.handlePasswordSubmit = async function() {
       showLoading();
       isSearchMode = true;
       searchResultsHeader.style.display = 'flex';
+      currentSearchPage = 0;
       
       try {
         const itemsRef = ref(db, 'items');
@@ -1112,8 +1122,9 @@ window.handlePasswordSubmit = async function() {
         
         // Filter items using advanced matching
         const results = allItems.filter(item => matchesSearch(item, query));
+        searchResults = results;
         
-        displaySearchResults(results, query);
+        displaySearchResults(currentSearchPage);
       } catch (e) {
         alert('Search error: ' + e.message);
       }
@@ -1121,63 +1132,109 @@ window.handlePasswordSubmit = async function() {
       hideLoading();
     }
     
-    function displaySearchResults(results, query) {
-      container.innerHTML = '';
-      
-      if (results.length === 0) {
-        showEmptyState('No matching items found');
-        return;
-      }
-      
-      results.forEach(item => {
-        const card = document.createElement('div');
-        card.className = `card ${item.type}`;
-        card.setAttribute('data-id', item.id);
-        
-        // Highlight matches in name and description
-        const highlightedName = highlightMatch(item.name, query);
-        const highlightedDesc = item.description ? highlightMatch(item.description, query) : '';
-        
-        card.innerHTML = `
-          <h3>${highlightedName}</h3>
-          ${item.description ? `<p style="font-size: .85rem; color: white; white-space: pre-wrap;">${highlightedDesc}</p>` : ''}
-          ${item.type === 'file' ? `
-            <div class="file-size">${formatSize(item.size)}</div>
-            <div class="file-date">${formatDate(item.createdAt)}</div>` : ''}
-        `;
-        
-        if (isAdmin) {
-          const ab = document.createElement('div');
-          ab.className = 'action-buttons';
-          ab.innerHTML = `
-            <button class="action-btn" onclick="deleteItem('${item.id}')">
-              <i class="fas fa-trash"></i>
-            </button>
-            <button class="action-btn" onclick="openEditor('${item.id}')">
-              <i class="fas fa-edit"></i>
-            </button>
-          `;
-          card.appendChild(ab);
-        }
-        
-        // Add click handler for the item
-        card.addEventListener('click', e => {
-          e.stopPropagation();
-          if (item.type === 'folder') {
-            currentPath = [];
-            loadItems(item.id);
-          } else if (item.type === 'file') {
-            openFile(item);
-          } else if (item.type === 'url') {
-            window.open(item.url, '_blank');
-          } else if (item.type === 'note') {
-            showNoteView(item);
-          }
-        });
-        
-        container.appendChild(card);
-      });
+    function displaySearchResults(page) {
+  // If this is the first “search” page, clear out any old cards:
+  if (page === 0) {
+    container.innerHTML = '';
+  }
+
+  // If there are no matches at all, show empty state and hide “Load More”:
+  if (searchResults.length === 0) {
+    // Only show empty‐state once (on page 0). On page > 0, there’s nothing to append anyway.
+    if (page === 0) {
+      showEmptyState('No matching items found');
     }
+    loadMoreContainer.style.display = 'none';
+    return;
+  }
+
+  // Compute start/end indices for this “page” of searchResults:
+  const start = page * itemsPerPage;
+  const end   = start + itemsPerPage;
+  const itemsToShow = searchResults.slice(start, end);
+
+  // Create & append a card for each item in this slice:
+  itemsToShow.forEach(item => {
+    const card = document.createElement('div');
+    card.className = `card ${item.type}`;
+    card.setAttribute('data-id', item.id);
+
+    // Highlight query matches in name and description:
+    const highlightedName = highlightMatch(item.name, searchInput.value);
+    const highlightedDesc = item.description
+      ? highlightMatch(item.description, searchInput.value)
+      : '';
+
+    card.innerHTML = `
+  <h3>${highlightedName}</h3>
+  ${item.description
+    ? `<p class="card-desc">${highlightedDesc}</p>`
+    : ''}
+  ${item.type === 'file'
+    ? `<div class="file-size">${formatSize(item.size)}</div>
+       <div class="file-date">${formatDate(item.createdAt)}</div>`
+    : ''}
+`;
+
+    if (isAdmin) {
+      const ab = document.createElement('div');
+      ab.className = 'action-buttons';
+      ab.innerHTML = `
+        <button class="action-btn" onclick="deleteItem('${item.id}')">
+          <i class="fas fa-trash"></i>
+        </button>
+        <button class="action-btn" onclick="openEditor('${item.id}')">
+          <i class="fas fa-edit"></i>
+        </button>
+      `;
+      card.appendChild(ab);
+    }
+
+    // Attach the same click handler logic (folder vs. file vs. URL vs. note):
+    card.addEventListener('click', e => {
+      e.stopPropagation();
+      if (item.type === 'folder') {
+        currentPath = [];
+        loadItems(item.id);
+      } else if (item.type === 'file') {
+        openFile(item);
+      } else if (item.type === 'url') {
+        window.open(item.url, '_blank');
+      } else if (item.type === 'note') {
+        showNoteView(item);
+      }
+    });
+
+    // APPEND (instead of replace) so earlier pages remain visible:
+    container.appendChild(card);
+  });
+
+  // Decide whether there are more search pages to load:
+  if (searchResults.length > end) {
+    loadMoreContainer.style.display = 'block';
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = "Load More";
+  } else {
+    loadMoreContainer.style.display = 'none';
+  }
+}
+    
+    function loadMoreSearchResults() {
+  if (isLoadingMore) return;
+
+  isLoadingMore = true;
+  showLoadingMore();
+  loadMoreBtn.disabled = true;
+  loadMoreBtn.textContent = "Loading...";
+
+  // Simulate network delay for demo
+  setTimeout(() => {
+    currentSearchPage++;
+    displaySearchResults(currentSearchPage);
+    isLoadingMore = false;
+    hideLoadingMore();
+  }, 500);
+}
     
     function clearSearch() {
       isSearchMode = false;
@@ -1208,8 +1265,14 @@ window.handlePasswordSubmit = async function() {
     initAuth();
     updateBreadcrumbs();
     
-    loadMoreBtn.addEventListener('click', loadMoreItems);
-
+    // Unified load more button handler
+    loadMoreBtn.addEventListener('click', () => {
+      if (isSearchMode) {
+        loadMoreSearchResults();
+      } else {
+        loadMoreItems();
+      }
+    });
     
   window.openSidebar = function() {
   document.getElementById("mySidebar").style.left = "0px";
