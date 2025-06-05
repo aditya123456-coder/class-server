@@ -170,11 +170,10 @@
     .file-size { font-size:.8rem; color:#666; }
     .file-date { font-size:.7rem; color:#999; }
     .card .search-highlight { 
-      background-color: rgb(4, 4, 4); 
+      background: none; 
       padding: 2px;
-      border-bottom: thin solid white;
+      border: none;
     }
-
     /* ACTION BUTTONS ON CARD */
     .action-buttons {
       position:absolute; top:.5rem; right:.5rem; display:flex; gap:.5rem;
