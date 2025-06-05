@@ -179,7 +179,7 @@
   <!-- LOADING OVERLAY -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    <p style="color: white;">Loading...</p>
+    <p style="color: rgb(255, 255, 255);">Loading...</p>
   </div>
 
   <script type="module">
@@ -1047,63 +1047,41 @@ window.handlePasswordSubmit = async function() {
       }
     };
 
-    // Search functionality
-    function fuzzyMatch(target, query) {
-      if (!query) return false;
-      
-      // Convert to lowercase for case-insensitive matching
-      const lowerTarget = target.toLowerCase();
-      const lowerQuery = query.toLowerCase();
-      
-      // Check for direct match
-      if (lowerTarget.includes(lowerQuery)) return true;
-      
-      // Check for partial match with typos
-      let queryIndex = 0;
-      for (let i = 0; i < lowerTarget.length && queryIndex < lowerQuery.length; i++) {
-        if (lowerTarget[i] === lowerQuery[queryIndex]) {
-          queryIndex++;
-        }
-      }
-      
-      // If we've matched all characters in the query
-      return queryIndex === lowerQuery.length;
+    // Search functionality - IMPROVED VERSION
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
-    
+
     function highlightMatch(text, query) {
       if (!query) return text;
-      
-      const lowerText = text.toLowerCase();
-      const lowerQuery = query.toLowerCase();
-      
-      // Find the start index of the best match
-      let startIndex = -1;
-      let bestLength = 0;
-      let currentLength = 0;
-      
-      for (let i = 0; i < lowerText.length; i++) {
-        if (lowerText[i] === lowerQuery[currentLength]) {
-          currentLength++;
-          if (currentLength > bestLength) {
-            bestLength = currentLength;
-            startIndex = i - currentLength + 1;
-          }
-        } else {
-          currentLength = 0;
-        }
-      }
-      
-      if (startIndex === -1 || bestLength < Math.max(3, lowerQuery.length - 2)) {
-        return text; // No good match found
-      }
-      
-      const before = text.substring(0, startIndex);
-      const match = text.substring(startIndex, startIndex + bestLength);
-      const after = text.substring(startIndex + bestLength);
-      
-      return `${before}<span class="search-highlight">${match}</span>${after}`;
+      const words = query.trim().toLowerCase().split(/\s+/);
+      let result = text;
+      words.forEach(word => {
+        const escaped = escapeRegExp(word);
+        const regex = new RegExp(`(${escaped})`, 'gi');
+        result = result.replace(regex, '<span class="search-highlight">$1</span>');
+      });
+      return result;
     }
-    
+
+    // Advanced search algorithm
+    function matchesSearch(item, query) {
+      if (!query) return false;
+      
+      const queryWords = query.trim().toLowerCase().split(/\s+/);
+      const searchFields = [
+        item.name.toLowerCase(),
+        item.description ? item.description.toLowerCase() : '',
+        item.type === 'url' ? item.url.toLowerCase() : '',
+        item.type === 'note' ? item.content.toLowerCase() : ''
+      ];
+      
+      // Check if all query words appear in any field (in any order)
+      return queryWords.every(word => {
+        return searchFields.some(field => field.includes(word));
+      });
+    }
+
     async function performGlobalSearch(query) {
       if (!query.trim()) {
         clearSearch();
@@ -1132,12 +1110,8 @@ window.handlePasswordSubmit = async function() {
           });
         });
         
-        // Filter items using fuzzy matching on name and description
-        const results = allItems.filter(item => {
-          const nameMatch = fuzzyMatch(item.name, query);
-          const descMatch = item.description && fuzzyMatch(item.description, query);
-          return nameMatch || descMatch;
-        });
+        // Filter items using advanced matching
+        const results = allItems.filter(item => matchesSearch(item, query));
         
         displaySearchResults(results, query);
       } catch (e) {
@@ -1166,7 +1140,7 @@ window.handlePasswordSubmit = async function() {
         
         card.innerHTML = `
           <h3>${highlightedName}</h3>
-          ${item.description ? `<p style="font-size: .85rem; color: #666; white-space: pre-wrap;">${highlightedDesc}</p>` : ''}
+          ${item.description ? `<p style="font-size: .85rem; color: white; white-space: pre-wrap;">${highlightedDesc}</p>` : ''}
           ${item.type === 'file' ? `
             <div class="file-size">${formatSize(item.size)}</div>
             <div class="file-date">${formatDate(item.createdAt)}</div>` : ''}
