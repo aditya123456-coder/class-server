@@ -521,11 +521,7 @@
   ${data.description
     ? `<p class="card-desc">${data.description}</p>`
     : ''}
-  ${data.type === 'file'
-    ? `
-      <div class="file-size">${formatSize(data.size)}</div>
-      <div class="file-date">${formatDate(data.createdAt)}</div>`
-    : ''}
+ ${data.type === 'file' ? '' : ''}
 `;
 
 
