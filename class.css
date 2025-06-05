@@ -161,7 +161,7 @@
     .file-size { font-size:.8rem; color:#666; }
     .file-date { font-size:.7rem; color:#999; }
     .card .search-highlight { 
-      background-color: rgb(255, 255, 255); 
+      background-color: rgba(255, 255, 255, 0.363); 
       padding: 2px;
       border-radius: 3px;
     }
@@ -371,7 +371,7 @@
     
     .clear-search-btn {
       background: var(--danger);
-      color: white;
+      color: rgb(255, 255, 255);
       border: none;
       padding: 0.5rem 1rem;
       border-radius: 0.5rem;
