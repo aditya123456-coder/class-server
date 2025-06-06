@@ -170,7 +170,7 @@
     .file-size { font-size:.8rem; color:#666; }
     .file-date { font-size:.7rem; color:#999; }
     .card .search-highlight { 
-      background: none; 
+      background-color: yellow;
       padding: 2px;
       border: none;
     }
